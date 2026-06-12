@@ -94,6 +94,14 @@
             border-color: var(--viking-red);
             background-color: var(--viking-red);
         }
+
+        .text-muted {
+            text-align: justify;
+        }
+
+        .card p {
+            text-align : justify;
+        }
     </style>
 </head>
 <body>
