@@ -157,11 +157,12 @@ try {
         }
 
         .table-custom thead {
-            background-color: var(--viking-dark-grey);
+            background-color: var(--viking-bg-grey);
             color: var(--viking-white);
         }
 
         .table-custom thead th {
+            color: var(--viking-white);
             border-bottom: 3px solid var(--viking-red);
             font-weight: 600;
             text-transform: uppercase;
@@ -326,7 +327,7 @@ try {
         <div class="row g-4 mb-4">
             <div class="col-md-6">
                 <div class="p-4 custom-card shadow-lg h-100">
-                    <h2 class="h4 mb-4">Top 5 — Points en cours</h2>
+                    <h2 class="h4 mb-4">Top 5 - Points en cours</h2>
                     <div class="table-responsive">
                         <table class="table table-custom table-striped align-middle mb-0">
                             <thead>
@@ -354,7 +355,7 @@ try {
 
             <div class="col-md-6">
                 <div class="p-4 custom-card shadow-lg h-100">
-                    <h2 class="h4 mb-4">Top 5 — Points cumulés</h2>
+                    <h2 class="h4 mb-4">Top 5 - Points cumulés</h2>
                     <div class="table-responsive">
                         <table class="table table-custom table-striped align-middle mb-0">
                             <thead>

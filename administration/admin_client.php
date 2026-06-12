@@ -126,13 +126,16 @@ try {
             --viking-bg-grey: #8A8181;
             --viking-light-grey: #E5E8E8;
             --viking-white: #FFFFFF;
+            --viking-dark: #212121;
         }
 
         body {
-            background-color: var(--viking-bg-grey);
-            color: var(--viking-dark-grey);
+            background-color: var(--viking-dark);
+            color: var(--viking-dark);
             font-family: system-ui, -apple-system, sans-serif;
         }
+
+        html { overflow-y: scroll; }
 
         header {
             background-color: var(--viking-white);
@@ -186,11 +189,12 @@ try {
         }
 
         .table-custom thead {
-            background-color: var(--viking-dark-grey);
+            background-color: var(--viking-bg-grey);
             color: var(--viking-white);
         }
 
         .table-custom thead th {
+            color: var(--viking-white);
             border-bottom: 3px solid var(--viking-red);
             font-weight: 600;
             text-transform: uppercase;
@@ -257,7 +261,7 @@ try {
         }
     </style>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
 
 <?php include_once("../PHP/header.php") ?>
 

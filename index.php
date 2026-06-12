@@ -98,27 +98,35 @@ try {
         <div class="row justify-content-center">
             <div class="col-lg-10">
                 <div class="card p-4 shadow text-dark bg-white">
-                    <form method="GET" action="reservation/reservation_trajet.php" class="row g-3 align-items-end text-start">
-                        <div class="col-md-5">
-                            <label class="form-label fw-bold">Commune de départ</label>
-                            <select name="depart" class="form-select" required>
+                    <form method="GET" action="reservation/reservation_trajet.php" class="row g-3 align-items-end text-start justify-content-center">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Départ :</label>
+                            <select name="depart" class="form-select" id="start" required>
                                 <option value="">Sélectionnez une ville...</option>
                                 <?php foreach ($communes as $code => $nom): ?>
                                     <option value="<?= htmlspecialchars($code) ?>"><?= htmlspecialchars($nom) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-5">
-                            <label class="form-label fw-bold">Commune d'arrivée</label>
-                            <select name="arrivee" class="form-select" required>
+
+                        <div class="col-sm-1 d-flex justify-content-center pb-1">
+                            <button type="button" class="btn btn-viking rounded-circle d-flex align-items-center justify-content-center" id="swap" onclick="swapDestination('start','end')"
+                                    style="width: 45px; height: 45px; padding: 0;">
+                                <i class="bi bi-arrow-left-right"></i>
+                            </button>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Arrivée :</label>
+                            <select name="arrivee" class="form-select" id="end" required>
                                 <option value="">Sélectionnez une destination...</option>
                                 <?php foreach ($communes as $code => $nom): ?>
                                     <option value="<?= htmlspecialchars($code) ?>"><?= htmlspecialchars($nom) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-viking w-100 py-2 fw-bold">Rechercher un trajet</button>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-viking w-100 py-2 fw-bold text-nowrap">Rechercher un trajet</button>
                         </div>
                     </form>
                 </div>
@@ -189,6 +197,7 @@ try {
 
 <?php include_once "PHP/footer.php"; ?>
 
+<script src="JS/swapDestination.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

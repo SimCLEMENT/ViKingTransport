@@ -16,6 +16,7 @@ $dsn      = "oci:dbname=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=$host)(PORT=$p
 
 try {
     $conn = new PDO($dsn, $user, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $sql = "SELECT c.CLI_NOM, c.CLI_PRENOM, c.CLI_VILLE, c.CLI_TELEPHONE, c.CLI_COURRIEL,
                    c.CLI_NB_POINTS_EC, c.CLI_NB_POINTS_TOT,
@@ -34,12 +35,14 @@ try {
     }
 
     $sql2 = "SELECT r.RES_NUM, TO_CHAR(r.RES_DATE, 'DD/MM/YYYY') AS RES_DATE,
-r.RES_PRIX_TOT, r.RES_NB_POINTS, c2.COM_NOM depart, c.COM_NOM arrivee
-FROM VIK_RESERVATION r
-JOIN VIK_COMMUNE c ON r.COM_CODE_INSEE_ARRIVEE = c.COM_CODE_INSEE
-JOIN VIK_COMMUNE c2 ON r.COM_CODE_INSEE_DEPART = c2.COM_CODE_INSEE
-WHERE r.CLI_NUM = :cli_num
-ORDER BY r.RES_DATE DESC";
+                    r.RES_PRIX_TOT, r.RES_NB_POINTS,
+                    c_depart.COM_NOM AS DEPART,
+                    c_arrivee.COM_NOM AS ARRIVEE
+             FROM VIK_RESERVATION r
+             LEFT JOIN VIK_COMMUNE c_depart ON r.COM_CODE_INSEE_DEPART = c_depart.COM_CODE_INSEE
+             LEFT JOIN VIK_COMMUNE c_arrivee ON r.COM_CODE_INSEE_ARRIVEE = c_arrivee.COM_CODE_INSEE
+             WHERE r.CLI_NUM = :cli_num
+             ORDER BY r.RES_DATE DESC";
 
     $stmt2 = $conn->prepare($sql2);
     $stmt2->execute(['cli_num' => $cli_num]);
@@ -57,10 +60,8 @@ ORDER BY r.RES_DATE DESC";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Mon compte - Viking Transport</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-
     <style>
         :root {
             --viking-red: #C62828;
@@ -70,24 +71,21 @@ ORDER BY r.RES_DATE DESC";
             --viking-light-grey: #E5E8E8;
             --viking-white: #FFFFFF;
             --viking-dark: #212121;
+            --viking-yellow: #ffc107;
         }
-
         body {
             background-color: #f8f9fa;
             color: var(--viking-dark-grey);
             font-family: system-ui, -apple-system, sans-serif;
         }
-
         header.site-header {
             background-color: var(--viking-white);
             border-bottom: 5px solid var(--viking-red);
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
-
         .nav-link { color: var(--viking-red); }
         .nav-link:hover { color: var(--viking-dark-red); }
         .nav-link.active { color: var(--viking-dark-red) !important; font-weight: bold; }
-
         .btn-outline-primary {
             color: var(--viking-red);
             border-color: var(--viking-red);
@@ -97,35 +95,24 @@ ORDER BY r.RES_DATE DESC";
             border-color: var(--viking-red);
             background-color: var(--viking-red);
         }
-
         .nav-col {
             flex: 1;
             display: flex;
             align-items: center;
         }
-
-        .nav-col.nav-center {
-            justify-content: center;
-            gap: 2rem;
-        }
-
-        .nav-col.nav-right {
-            justify-content: flex-end;
-        }
-
+        .nav-col.nav-center { justify-content: center; gap: 2rem; }
+        .nav-col.nav-right { justify-content: flex-end; }
         .custom-card {
             background-color: var(--viking-white);
             border: none;
             border-radius: 10px;
         }
-
         h2.h4 {
             color: var(--viking-dark-grey);
             font-weight: 700;
             position: relative;
             padding-left: 14px;
         }
-
         h2.h4::before {
             content: "";
             position: absolute;
@@ -136,14 +123,12 @@ ORDER BY r.RES_DATE DESC";
             background-color: var(--viking-red);
             border-radius: 2px;
         }
-
         .table-custom {
             --bs-table-bg: transparent;
             --bs-table-striped-bg: #F9FAFA;
             --bs-table-hover-bg: #F2F4F4;
             color: var(--viking-dark-grey);
         }
-
         .table-custom thead th {
             border-bottom: 3px solid var(--viking-red);
             font-weight: 600;
@@ -152,13 +137,11 @@ ORDER BY r.RES_DATE DESC";
             letter-spacing: 0.5px;
             padding: 14px 16px;
         }
-
         .table-custom tbody td {
             padding: 12px 16px;
             border-color: var(--viking-light-grey);
             vertical-align: middle;
         }
-
         .badge-type {
             background-color: var(--viking-red);
             color: white;
@@ -166,7 +149,6 @@ ORDER BY r.RES_DATE DESC";
             padding: 5px 12px;
             border-radius: 20px;
         }
-
         .info-label {
             font-size: 0.8rem;
             font-weight: 600;
@@ -175,46 +157,59 @@ ORDER BY r.RES_DATE DESC";
             color: var(--viking-dark-grey);
             opacity: 0.7;
         }
-
-        .info-value {
-            font-size: 1rem;
-            color: #333;
-        }
-
+        .info-value { font-size: 1rem; color: #333; }
         .points-box {
             border-left: 4px solid var(--viking-red);
             padding-left: 1rem;
         }
-
         .points-value {
             font-size: 1.8rem;
             font-weight: 700;
             color: var(--viking-red);
             line-height: 1;
         }
-
         .points-label {
             font-size: 0.8rem;
             color: var(--viking-dark-grey);
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
-
         .btn-deconnexion {
             background-color: transparent;
             border: 1.5px solid var(--viking-red);
             color: var(--viking-red);
             font-weight: 600;
         }
-
         .btn-deconnexion:hover {
             background-color: var(--viking-red);
             color: white;
         }
-
         .btn-outline-info {
             color: var(--viking-dark);
             border-color: var(--viking-dark);
+            --bs-btn-active-bg: var(--viking-yellow);
+            --bs-btn-active-color: var(--viking-dark);
+            --bs-btn-active-border-color: var(--viking-yellow);
+            --bs-btn-focus-shadow-rgb: 198, 40, 40;
+            --bs-btn-active-shadow: none;
+        }
+        .btn-outline-info:hover {
+            color: var(--viking-dark);
+            border-color: var(--viking-yellow);
+            background-color: var(--viking-yellow);
+        }
+        .btn-pdf {
+            background-color: #C62828;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-pdf:hover {
+            background-color: #9b1e1e;
+            color: white;
         }
     </style>
 </head>
@@ -223,45 +218,42 @@ ORDER BY r.RES_DATE DESC";
     <?php include_once("../PHP/header.php") ?>
 
     <main class="container mb-5 mt-4">
-
         <section class="mb-4">
             <div class="p-4 custom-card shadow-lg">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2 class="h4 mb-0">Mon compte</h2>
                     <span class="badge-type"><i class="bi bi-star-fill me-1"></i><?= htmlspecialchars($client['TYP_NOM']) ?></span>
                 </div>
-
                 <div class="row g-4 mb-4">
                     <div class="col-md-4">
                         <div class="info-label">Nom complet</div>
-                        <div class="info-value"><?= htmlspecialchars(ucfirst($_SESSION["prenom"])) ?> <?= htmlspecialchars(strtoupper($_SESSION["nom"]));?> <?php $_GET['edit'] = 'nom' ?>
-                        <a class="btn btn-outline-info" href="/compte/edit.php<?php echo "?edit=" . $_GET['edit'] ?>"><i class="bi bi-pencil"></i> Modifier</a></div>
+                        <div class="info-value"><?= htmlspecialchars(ucfirst($_SESSION["prenom"])) ?> <?= htmlspecialchars(strtoupper($_SESSION["nom"]));?> 
+                        <a class="btn btn-outline-info" href="/compte/edit.php?edit=nom"><i class="bi bi-pencil"></i> Modifier</a></div>
                     </div>
                     <div class="col-md-4">
                         <div class="info-label">Email</div>
-                        <div class="info-value"><?= htmlspecialchars($client['CLI_COURRIEL'] ?: '—') ?><?php $_GET['edit'] = 'mail' ?>
-                            <a class="btn btn-outline-info" href="/compte/edit.php<?php echo "?edit=" . $_GET['edit'] ?>"><i class="bi bi-pencil"></i> Modifier</a></div>
+                        <div class="info-value"><?= htmlspecialchars($client['CLI_COURRIEL'] ?: '-') ?>
+                            <a class="btn btn-outline-info" href="/compte/edit.php?edit=mail"><i class="bi bi-pencil"></i> Modifier</a></div>
                     </div>
                     <div class="col-md-4">
                         <div class="info-label">Téléphone</div>
-                        <div class="info-value"><?= htmlspecialchars($client['CLI_TELEPHONE'] ?: '—') ?><?php $_GET['edit'] = 'tel' ?>
-                            <a class="btn btn-outline-info" href="/compte/edit.php<?php echo "?edit=" . $_GET['edit'] ?>"><i class="bi bi-pencil"></i> Modifier</a></div>
+                        <div class="info-value"><?= htmlspecialchars($client['CLI_TELEPHONE'] ?: '-') ?>
+                            <a class="btn btn-outline-info" href="/compte/edit.php?edit=tel"><i class="bi bi-pencil"></i> Modifier</a></div>
                     </div>
                     <div class="col-md-4">
                         <div class="info-label">Ville</div>
-                        <div class="info-value"><?= htmlspecialchars($client['CLI_VILLE'] ?: '—') ?><?php $_GET['edit'] = 'ville' ?>
-                            <a class="btn btn-outline-info" href="/compte/edit.php<?php echo "?edit=" . $_GET['edit'] ?>"><i class="bi bi-pencil"></i> Modifier</a></div>
+                        <div class="info-value"><?= htmlspecialchars($client['CLI_VILLE'] ?: '-') ?>
+                            <a class="btn btn-outline-info" href="/compte/edit.php?edit=ville"><i class="bi bi-pencil"></i> Modifier</a></div>
                     </div>
                     <div class="col-md-4">
                         <div class="info-label">Dernière connexion</div>
-                        <div class="info-value"><?= htmlspecialchars($client['DATE_CONNEC'] ?: '—') ?></div>
+                        <div class="info-value"><?= htmlspecialchars($client['DATE_CONNEC'] ?: '-') ?></div>
                     </div>
                     <div class="col-md-4">
                         <div class="info-label">Réduction actuelle</div>
                         <div class="info-value"><?= htmlspecialchars($client['TYP_REDUC']) ?>%</div>
                     </div>
                 </div>
-
                 <a href="/auth/deconnexion.php" class="btn btn-deconnexion btn-sm">
                     <i class="bi bi-box-arrow-right me-1"></i> Se déconnecter
                 </a>
@@ -297,7 +289,6 @@ ORDER BY r.RES_DATE DESC";
         <section>
             <div class="p-4 custom-card shadow-lg">
                 <h2 class="h4 mb-4">Mes réservations</h2>
-
                 <?php if (empty($reservations)): ?>
                     <p class="text-muted">Vous n'avez pas encore de réservation.</p>
                 <?php else: ?>
@@ -311,6 +302,7 @@ ORDER BY r.RES_DATE DESC";
                                     <th>Départ</th>
                                     <th>Arrivée</th>
                                     <th>Prix total</th>
+                                    <th>Ticket</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -319,9 +311,14 @@ ORDER BY r.RES_DATE DESC";
                                         <td><strong><?= htmlspecialchars($res['RES_NUM']) ?></strong></td>
                                         <td><?= htmlspecialchars($res['RES_DATE']) ?></td>
                                         <td><?= htmlspecialchars($res['RES_NB_POINTS']) ?> pts</td>
-                                        <td><?= $res['DEPART'] ?></td>
-                                        <td><?= $res['ARRIVEE'] ?></td>
-                                        <td><strong><?= htmlspecialchars($res['RES_PRIX_TOT']) ?> €</strong></td>
+                                        <td><?= htmlspecialchars($res['DEPART'] ?? '?') ?></td>
+                                        <td><?= htmlspecialchars($res['ARRIVEE'] ?? '?') ?></td>
+                                        <td><strong><?= number_format((float)str_replace(',', '.', $res['RES_PRIX_TOT']), 2, ',', ' ') ?> €</strong></td>
+                                        <td>
+                                            <a href="../PHP/generer_pdf.php?res_num=<?= urlencode($res['RES_NUM']) ?>" target="_blank" class="btn-pdf">
+                                                <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+                                            </a>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -330,11 +327,9 @@ ORDER BY r.RES_DATE DESC";
                 <?php endif; ?>
             </div>
         </section>
-
     </main>
 
     <?php include_once "../PHP/footer.php"; ?>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

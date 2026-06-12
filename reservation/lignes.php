@@ -45,10 +45,8 @@ foreach ($noeuds as $n) {
     $ligneNoeuds[$lig]['arrivees'][$arr] = true;
 }
 
-// Reconstruction de l'ordre des arrêts par ligne
 $lignesOrdonnees = [];
 foreach ($ligneNoeuds as $lig => $data) {
-    // Trouver le départ : un nœud qui est dans 'departs' mais jamais dans 'arrivees'
     $departs = array_keys($ligneNoeuds[$lig]['departs']);
     $arrivees = array_keys($ligneNoeuds[$lig]['arrivees']);
     $debut = null;
@@ -61,8 +59,7 @@ foreach ($ligneNoeuds as $lig => $data) {
     if (!$debut) $debut = $departs[0] ?? null;
     if (!$debut) continue;
 
-    // Reconstruire la chaîne ordonnée
-    // Construire une map depart => suivant
+
     $suivantMap = [];
     foreach ($noeuds as $n) {
         if ($n['LIG_NUM'] === $lig) {
@@ -344,7 +341,14 @@ $lignesJson = json_encode($lignes);
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const map = L.map('map').setView([49.1, -0.4], 8);
+        const map = L.map('map', {
+            minZoom: 6,
+            maxBounds: [
+                [41.0, -5.5],
+                [51.5, 10.0] 
+            ],
+            maxBoundsViscosity: 1.0 
+        }).setView([49.1, -0.4], 8);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
@@ -353,13 +357,11 @@ $lignesJson = json_encode($lignes);
         const lignesOrdonnees = <?= $lignesOrdonneesJson ?>;
         const lignesInfo = <?= $lignesJson ?>;
 
-        // Index des communes par code INSEE
         const communeIndex = {};
         communes.forEach(c => {
             communeIndex[c.COM_CODE_INSEE] = c;
         });
 
-        // Génère une couleur HSL stable et lisible à partir d'une chaîne
         function couleurLigne(ligNum) {
             let hash = 0;
             for (let i = 0; i < ligNum.length; i++) {
@@ -369,7 +371,6 @@ $lignesJson = json_encode($lignes);
             return `hsl(${hue}, 75%, 42%)`;
         }
 
-        // Tracer les lignes
         Object.entries(lignesOrdonnees).forEach(([ligNum, arrets]) => {
             const coords = arrets
                 .map(code => communeIndex[code])
@@ -391,7 +392,6 @@ $lignesJson = json_encode($lignes);
             }).addTo(map).bindPopup(`<strong style="color:${couleur}">${label}</strong>`);
         });
 
-        // Marqueurs des communes
         communes.forEach(c => {
             L.marker([c.LAT, c.LNG], {
                 icon: L.divIcon({

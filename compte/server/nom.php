@@ -8,11 +8,13 @@ $db = $dbOracle;
 $db_userName = $db_usernameOracle;
 $db_pwd = $db_passwordOracle;
 
-if (isset($_POST["nom"]))
-    $nouveauNom = $_POST["nom"];
 
-if (isset($_POST["prenom"]))
-    $nouveauPrenom = $_POST["prenom"];
+$saisieNom = trim($_POST["nom"] ?? "");
+$saisiePrenom = trim($_POST["prenom"] ?? "");
+
+$nouveauNom = (!empty($saisieNom) ? $saisieNom : $_SESSION["nom"]);
+$nouveauPrenom = (!empty($saisiePrenom) ? $saisiePrenom : $_SESSION["prenom"]);
+
 
 $conn = OuvrirConnexionPDO($db, $db_userName, $db_pwd);
 

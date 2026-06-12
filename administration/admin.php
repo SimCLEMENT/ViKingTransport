@@ -226,6 +226,10 @@ try {
             font-family: system-ui, -apple-system, sans-serif;
         }
 
+        html {
+            overflow-y: scroll;
+        }
+
         header.site-header {
             background-color: var(--viking-white);
             border-bottom: 5px solid var(--viking-red);
@@ -299,7 +303,7 @@ try {
             --bs-table-bg: transparent;
             --bs-table-striped-bg: #F9FAFA;
             --bs-table-hover-bg: #F2F4F4;
-            color: var(--viking-dark-grey);
+            color: var(--viking-white);
         }
 
         .table-custom thead {
@@ -350,6 +354,19 @@ try {
             font-size: 0.75rem;
             padding: 3px 10px;
             border-radius: 20px;
+        }
+
+        .table-responsive thead {
+            background-color: var(--viking-bg-grey);
+            color: var(--viking-white);
+        }
+
+        .table-responsive thead th a {
+            color: var(--viking-white) !important;
+        }
+
+        .modal .table-custom thead th {
+            color: var(--viking-white);
         }
     </style>
 </head>
@@ -416,13 +433,13 @@ try {
                                     <td><strong><?= htmlspecialchars($c['CLI_NUM']) ?></strong></td>
                                     <td><?= htmlspecialchars($c['CLI_NOM']) ?></td>
                                     <td><?= htmlspecialchars($c['CLI_PRENOM']) ?></td>
-                                    <td><?= htmlspecialchars($c['CLI_VILLE'] ?: '—') ?></td>
-                                    <td><?= htmlspecialchars($c['CLI_TELEPHONE'] ?: '—') ?></td>
-                                    <td><?= htmlspecialchars($c['CLI_COURRIEL'] ?: '—') ?></td>
+                                    <td><?= htmlspecialchars($c['CLI_VILLE'] ?: '-') ?></td>
+                                    <td><?= htmlspecialchars($c['CLI_TELEPHONE'] ?: '-') ?></td>
+                                    <td><?= htmlspecialchars($c['CLI_COURRIEL'] ?: '-') ?></td>
                                     <td><span class="badge-type"><?= htmlspecialchars($c['TYP_NOM']) ?></span></td>
                                     <td><?= htmlspecialchars($c['CLI_NB_POINTS_EC']) ?></td>
                                     <td><?= htmlspecialchars($c['CLI_NB_POINTS_TOT']) ?></td>
-                                    <td><?= htmlspecialchars($c['DATE_CONNEC'] ?: '—') ?></td>
+                                    <td><?= htmlspecialchars($c['DATE_CONNEC'] ?: '-') ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -540,7 +557,7 @@ try {
                                                 <td><strong><?= htmlspecialchars($i['CLI_NUM']) ?></strong></td>
                                                 <td><?= htmlspecialchars($i['CLI_NOM']) ?></td>
                                                 <td><?= htmlspecialchars($i['CLI_PRENOM']) ?></td>
-                                                <td><?= htmlspecialchars($i['CLI_VILLE'] ?: '—') ?></td>
+                                                <td><?= htmlspecialchars($i['CLI_VILLE'] ?: '-') ?></td>
                                                 <td><?= htmlspecialchars($i['DATE_CONNEC']) ?></td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -554,8 +571,8 @@ try {
                             <ul class="list-group">
                                 <?php foreach ($supprimes as $s): ?>
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <span><?= htmlspecialchars($s['CLI_PRENOM']) ?> <?= htmlspecialchars($s['CLI_NOM']) ?> — <?= htmlspecialchars($s['CLI_VILLE'] ?: '—') ?></span>
-                                        <span class="badge bg-danger">Supprimé — <?= htmlspecialchars($s['DATE_CONNEC']) ?></span>
+                                        <span><?= htmlspecialchars($s['CLI_PRENOM']) ?> <?= htmlspecialchars($s['CLI_NOM']) ?> - <?= htmlspecialchars($s['CLI_VILLE'] ?: '-') ?></span>
+                                        <span class="badge bg-danger">Supprimé - <?= htmlspecialchars($s['DATE_CONNEC']) ?></span>
                                     </li>
                                 <?php endforeach; ?>
                             </ul>
@@ -612,12 +629,7 @@ try {
         </div>
 
     </main>
-
-    <footer class="bg-light text-center py-3 border-top text-muted small mt-auto">
-        <div class="container">
-            <p class="mb-0">© 2026 Viking Transport — Développé par l'agence <strong>Asgard Tech</strong></p>
-        </div>
-    </footer>
+    <?php include_once("../PHP/footer.php"); ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>

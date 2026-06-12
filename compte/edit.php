@@ -119,11 +119,12 @@ session_start();
         }
 
         if ($_SESSION["error"] == "noChange") {
-            echo ("<p class=\"text-center text-danger\">Veuillez entrer votre adresse courriel et votre mot de passe.</p>");
+            echo ("<p class=\"text-center text-danger\">Aucune modification détectée.</p>");
         }
         unset($_SESSION["error"]);
     ?>
 
+    <a class="btn btn-outline-danger" href="/compte/compte.php"><i class="bi i-arrow-return-left"></i> Retour</a>
 </div>
 
 <footer class="bg-light text-center py-3 border-top text-muted small fixed-bottom">

@@ -90,12 +90,10 @@ try {
 
 <div class="container-fluid p-0 flex-grow-1 d-flex flex-column">
     <div class="hero-section flex-grow-1 text-center">
-        <h1>Nous contacter</h1><br>
-        <h2>Appellez-nous</h2><br>
-        <p><a href="tel:0784716389">+33 7 84 71 63 89</a></p><br><br>
-
-        <h2>Envoyer nous un mail</h2>
-        <p><a href="mailto:kylian.langlois@etu.unicaen.fr">support@viking.transport</a></p>
+        <pre>
+            <h1>Nous contacter</h1>
+            <h2><a class="link-danger" href="tel:0784716389">+33 7 84 71 63 89</a></h2<br><h2><a class="link-danger" href="mailto:kylian.langlois@etu.unicaen.fr">support@viking.transport</a></h2>
+        </pre>
     </div>
 </div>
 

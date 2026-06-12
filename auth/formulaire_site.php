@@ -125,14 +125,27 @@ session_start();
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="cli_mdp" class="form-label fw-semibold small">Mot de passe</label>
-                        <input type="password" class="form-control" id="cli_mdp" name="cli_mdp"
-                               placeholder="Votre mot de passe" maxlength="255" required>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="cli_mdp" name="cli_mdp"
+                                   placeholder="Votre mot de passe" maxlength="255" required>
+
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('cli_mdp', 'pwdIcon')">
+                                <i class="bi bi-eye" id="pwdIcon"></i>
+                            </button>
+                        </div>
                         <div class="invalid-feedback">Veuillez saisir un mot de passe.</div>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="cli_mdp_confirm" class="form-label fw-semibold small">Confirmation du mot de passe</label>
-                        <input type="password" class="form-control" id="cli_mdp_confirm" name="cli_mdp_confirm"
-                               placeholder="Confirmez votre mot de passe" maxlength="255" required>
+
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="cli_mdp_confirm" name="cli_mdp_confirm"
+                                   placeholder="Confirmez votre mot de passe" maxlength="255" required>
+
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('cli_mdp_confirm', 'pwdIconConfirm')">
+                                <i class="bi bi-eye" id="pwdIconConfirm"></i>
+                            </button>
+                        </div>
                         <div class="invalid-feedback" id="mdp-confirm-feedback">Les mots de passe ne correspondent pas.</div>
                     </div>
                 </div>
@@ -328,6 +341,7 @@ session_start();
         });
     </script>
 
+    <script src="../JS/password-verify.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

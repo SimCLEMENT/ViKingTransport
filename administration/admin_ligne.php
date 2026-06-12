@@ -143,13 +143,16 @@ try {
             --viking-bg-grey: #8A8181;
             --viking-light-grey: #E5E8E8;
             --viking-white: #FFFFFF;
+            --viking-dark: #212121;
         }
 
         body {
-            background-color: var(--viking-bg-grey);
-            color: var(--viking-dark-grey);
+            background-color: var(--viking-dark);
+            color: var(--viking-dark);
             font-family: system-ui, -apple-system, sans-serif;
         }
+
+        html { overflow-y: scroll; }
 
         header.site-header {
             background-color: var(--viking-white);
@@ -203,15 +206,16 @@ try {
             --bs-table-bg: transparent;
             --bs-table-striped-bg: #F9FAFA;
             --bs-table-hover-bg: #F2F4F4;
-            color: var(--viking-dark-grey);
+            color: var(--viking-bg-grey);
         }
 
         .table-custom thead {
-            background-color: var(--viking-dark-grey);
+            background-color: var(--viking-bg-grey);
             color: var(--viking-white);
         }
 
         .table-custom thead th {
+            color: var(--viking-white);
             border-bottom: 3px solid var(--viking-red);
             font-weight: 600;
             text-transform: uppercase;
@@ -254,9 +258,18 @@ try {
             background-color: var(--viking-red);
             color: white;
         }
+
+        .table-responsive thead {
+            background-color: var(--viking-bg-grey);
+            color: var(--viking-white);
+        }
+
+        .table-responsive thead th a {
+            color: var(--viking-white) !important;
+        }
     </style>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
 
 <?php include_once("../PHP/header.php") ?>
 
@@ -349,9 +362,9 @@ try {
                                 <tr>
                                     <td><strong><?= htmlspecialchars($n['COM_CODE_INSEE_ARRET']) ?></strong></td>
                                     <td><?= htmlspecialchars($n['COM_NOM']) ?></td>
-                                    <td><?= htmlspecialchars($n['HEURE'] ?? '—') ?></td>
-                                    <td><?= htmlspecialchars($n['NOE_DISTANCE_PROCHAIN'] ?? '—') ?></td>
-                                    <td><?= htmlspecialchars($n['NOE_DUREE_PROCHAIN'] ?? '—') ?></td>
+                                    <td><?= htmlspecialchars($n['HEURE'] ?? '-') ?></td>
+                                    <td><?= htmlspecialchars($n['NOE_DISTANCE_PROCHAIN'] ?? '-') ?></td>
+                                    <td><?= htmlspecialchars($n['NOE_DUREE_PROCHAIN'] ?? '-') ?></td>
                                     <td>
                                         <form method="POST" class="d-flex gap-2 align-items-center">
                                             <input type="hidden" name="action" value="modifier_noeud">
