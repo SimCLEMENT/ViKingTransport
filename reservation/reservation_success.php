@@ -34,7 +34,7 @@ if (!$ticket) {
                 </div>
                 <p class="text-muted">N'oubliez pas de télécharger votre ticket. Il sera à présenter au conducteur.</p>
                 <div class="d-grid gap-3">
-                    <a href="../PHP/generer_pdf.php?res_num=<?= urlencode($ticket) ?>" class="btn btn-dark btn-lg">
+                    <a href="../PHP/generer_pdf.php?res_num=<?= urlencode($ticket) ?>" target="_blank" class="btn btn-dark btn-lg">
                         <i class="bi bi-file-earmark-pdf-fill text-danger"></i> Télécharger mon billet (PDF)
                     </a>
                     <a href="reservation_trajet.php" class="btn btn-outline-secondary btn-lg">
@@ -46,5 +46,6 @@ if (!$ticket) {
         </div>
     </div>
 </div>
+
 </body>
 </html>

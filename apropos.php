@@ -167,11 +167,7 @@
     </div>
 </main>
 
-    <footer class="bg-light text-center py-3 border-top text-muted small mt-auto">
-        <div class="container">
-            <p class="mb-0">© 2026 Viking Transport - Développé par l'agence <strong>Asgard Tech</strong></p>
-        </div>
-    </footer>
+    <?php include_once("PHP/footer.php"); ?>
 
     
     <script 

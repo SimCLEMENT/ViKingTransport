@@ -331,14 +331,12 @@ try {
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
     <title>Choix du trajet - Viking Transport</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-
         :root {
             --viking-red: #C62828;
             --viking-dark-red: #9b1e1e;
@@ -348,12 +346,12 @@ try {
             --viking-white: #FFFFFF;
             --viking-dark: #212121;
         }
-
         body {
             background-color: #f8f9fa;
             font-family: system-ui;
         }
 
+        html { overflow-y: scroll; }
         .trajet-card {
             border: 2px solid #e0e0e0;
             border-radius: 16px;
@@ -363,23 +361,19 @@ try {
             margin-bottom: 12px;
             padding: 1rem;
         }
-
         .trajet-card:hover {
             border-color: #C62828;
             transform: translateY(-2px);
         }
-
         .prix {
             color: #C62828;
             font-weight: bold;
             font-size: 1.5rem;
         }
-
         .trajets-list {
             max-height: 500px;
             overflow-y: auto;
         }
-
         .btn-primary {
             background-color: var(--viking-red);
             color: white;
@@ -391,105 +385,120 @@ try {
             --bs-btn-focus-shadow-rgb: 198, 40, 40;
             --bs-btn-active-shadow: none;
         }
-
         .btn-primary:hover {
             background-color: #9b1e1e;
             color: white;
         }
 
+        .nav-col { flex: 1; display: flex; align-items: center; }
+        .nav-col.nav-center { justify-content: center; gap: 2rem; }
+        .nav-col.nav-right { justify-content: flex-end; }
+
+        .nav-link { color: var(--viking-red); }
+        .nav-link:hover { color: var(--viking-dark-red); }
+        .nav-link.active { color: var(--viking-dark-red) !important; font-weight: bold; }
+        .btn-outline-primary {
+            color: var(--viking-red);
+            border-color: var(--viking-red);
+            --bs-btn-active-bg: var(--viking-red);
+            --bs-btn-active-color: var(--viking-white);
+            --bs-btn-active-border-color: var(--viking-red);
+            --bs-btn-focus-shadow-rgb: 198, 40, 40;
+            --bs-btn-active-shadow: none;
+        }
+        .btn-outline-primary:hover {
+            color: var(--viking-white);
+            border-color: var(--viking-red);
+            background-color: var(--viking-red);
+        }
     </style>
 </head>
-
-<body class="py-5">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card shadow border-0 rounded-4 p-4 bg-white">
-                    <h3>Bonjour <?= htmlspecialchars($client['prenom']) ?> !</h3>
-                    <p>Trajet : <strong><?= htmlspecialchars($trajetStr) ?></strong></p>
-                    <?php if (isset($error_message)): ?>
-                        <div class="alert alert-danger"><?= htmlspecialchars($error_message) ?></div>
-                    <?php endif; ?>
-
-                    <form method="GET" action="reservation_choix.php" class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Date de départ</label>
-                            <input type="date" name="date" class="form-control" value="<?= htmlspecialchars($dateVoyage) ?>" min="<?= date('Y-m-d') ?>" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">Heure min. de départ</label>
-                            <input type="time" name="heure" class="form-control" value="<?= htmlspecialchars($heureMin) ?>" step="60" required>
-                        </div>
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm">Actualiser</button>
+<body class="d-flex flex-column min-vh-100">
+<?php include_once("../PHP/header.php"); ?>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow border-0 rounded-4 p-4 bg-white">
+                <h3>Bonjour <?= htmlspecialchars($client['prenom']) ?> !</h3>
+                <p>Trajet : <strong><?= htmlspecialchars($trajetStr) ?></strong></p>
+                <?php if (isset($error_message)): ?>
+                    <div class="alert alert-danger"><?= htmlspecialchars($error_message) ?></div>
+                <?php endif; ?>
+                <form method="GET" action="reservation_choix.php" class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Date de départ</label>
+                        <input type="date" name="date" class="form-control" value="<?= htmlspecialchars($dateVoyage) ?>" min="<?= date('Y-m-d') ?>" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Heure min. de départ</label>
+                        <input type="time" name="heure" class="form-control" value="<?= htmlspecialchars($heureMin) ?>" step="60" required>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm">Actualiser</button>
+                    </div>
+                </form>
+                <?php if (empty($tousLesTrajets)): ?>
+                    <div class="alert alert-warning">
+                        Aucun trajet trouvé pour l'heure demandée.<br>
+                        Note : Les trajets de plus de 500 km ne sont pas proposés. Veuillez effectuer plusieurs voyages.
+                    </div>
+                <?php else: ?>
+                    <form method="POST" action="choix_paiement.php" id="choixForm">
+                        <input type="hidden" name="date_voyage" value="<?= htmlspecialchars($dateVoyage) ?>">
+                        <input type="hidden" name="heure_min" value="<?= htmlspecialchars($heureMin) ?>">
+                        <input type="hidden" name="trajet_json" id="trajet_json">
+                        <h4>Trajet le plus rapide</h4>
+                        <?php if ($plusRapide): ?>
+                            <div class="trajet-card" onclick="submitTrajet(<?= htmlspecialchars(json_encode($plusRapide)) ?>)">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <strong><?= implode(' → ', $plusRapide['lignes']) ?></strong><br>
+                                        Départ <?= $plusRapide['heure_depart'] ?> → Arrivée <?= $plusRapide['heure_arrivee'] ?><br>
+                                        Durée : <?= floor($plusRapide['duree_minutes'] / 60) ?>h<?= $plusRapide['duree_minutes'] % 60 ?> • <?= $plusRapide['distance'] ?> km
+                                    </div>
+                                    <div class="prix"><?= number_format($plusRapide['prix'], 2, ',', ' ') ?> €</div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                        <h4 class="mt-3">Trajet le plus court</h4>
+                        <?php if ($plusCourt): ?>
+                            <div class="trajet-card" onclick="submitTrajet(<?= htmlspecialchars(json_encode($plusCourt)) ?>)">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <strong><?= implode(' → ', $plusCourt['lignes']) ?></strong><br>
+                                        Départ <?= $plusCourt['heure_depart'] ?> → Arrivée <?= $plusCourt['heure_arrivee'] ?><br>
+                                        Durée : <?= floor($plusCourt['duree_minutes'] / 60) ?>h<?= $plusCourt['duree_minutes'] % 60 ?> • <?= $plusCourt['distance'] ?> km
+                                    </div>
+                                    <div class="prix"><?= number_format($plusCourt['prix'], 2, ',', ' ') ?> €</div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                        <h4 class="mt-3">Tous les autres trajets disponibles</h4>
+                        <div class="trajets-list">
+                            <?php foreach ($autres as $t): ?>
+                                <div class="trajet-card" onclick="submitTrajet(<?= htmlspecialchars(json_encode($t)) ?>)">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong><?= implode(' → ', $t['lignes']) ?></strong><br>
+                                            <?= $t['heure_depart'] ?> → <?= $t['heure_arrivee'] ?> (<?= floor($t['duree_minutes'] / 60) ?>h<?= $t['duree_minutes'] % 60 ?>) • <?= $t['distance'] ?> km
+                                        </div>
+                                        <div class="prix"><?= number_format($t['prix'], 2, ',', ' ') ?> €</div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     </form>
-
-                    <?php if (empty($tousLesTrajets)): ?>
-                        <div class="alert alert-warning">
-                            Aucun trajet trouvé pour l'heure demandée.<br>
-                            Note : Les trajets de plus de 500 km ne sont pas proposés. Veuillez effectuer plusieurs voyages.
-                        </div>
-                    <?php else: ?>
-                        <form method="POST" action="confirmation_reservation.php" id="choixForm">
-                            <input type="hidden" name="date_voyage" value="<?= htmlspecialchars($dateVoyage) ?>">
-                            <input type="hidden" name="heure_min" value="<?= htmlspecialchars($heureMin) ?>">
-                            <input type="hidden" name="trajet_json" id="trajet_json">
-
-                            <h4>Trajet le plus rapide</h4>
-                            <?php if ($plusRapide): ?>
-                                <div class="trajet-card" onclick="submitTrajet(<?= htmlspecialchars(json_encode($plusRapide)) ?>)">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <strong><?= implode(' → ', $plusRapide['lignes']) ?></strong><br>
-                                            Départ <?= $plusRapide['heure_depart'] ?> → Arrivée <?= $plusRapide['heure_arrivee'] ?><br>
-                                            Durée : <?= floor($plusRapide['duree_minutes'] / 60) ?>h<?= $plusRapide['duree_minutes'] % 60 ?> • <?= $plusRapide['distance'] ?> km
-                                        </div>
-                                        <div class="prix"><?= number_format($plusRapide['prix'], 2, ',', ' ') ?> €</div>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-
-                            <h4 class="mt-3">Trajet le plus court</h4>
-                            <?php if ($plusCourt): ?>
-                                <div class="trajet-card" onclick="submitTrajet(<?= htmlspecialchars(json_encode($plusCourt)) ?>)">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <strong><?= implode(' → ', $plusCourt['lignes']) ?></strong><br>
-                                            Départ <?= $plusCourt['heure_depart'] ?> → Arrivée <?= $plusCourt['heure_arrivee'] ?><br>
-                                            Durée : <?= floor($plusCourt['duree_minutes'] / 60) ?>h<?= $plusCourt['duree_minutes'] % 60 ?> • <?= $plusCourt['distance'] ?> km
-                                        </div>
-                                        <div class="prix"><?= number_format($plusCourt['prix'], 2, ',', ' ') ?> €</div>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-
-                            <h4 class="mt-3">Tous les autres trajets disponibles</h4>
-                            <div class="trajets-list">
-                                <?php foreach ($autres as $t): ?>
-                                    <div class="trajet-card" onclick="submitTrajet(<?= htmlspecialchars(json_encode($t)) ?>)">
-                                        <div class="d-flex justify-content-between">
-                                            <div>
-                                                <strong><?= implode(' → ', $t['lignes']) ?></strong><br>
-                                                <?= $t['heure_depart'] ?> → <?= $t['heure_arrivee'] ?> (<?= floor($t['duree_minutes'] / 60) ?>h<?= $t['duree_minutes'] % 60 ?>) • <?= $t['distance'] ?> km
-                                            </div>
-                                            <div class="prix"><?= number_format($t['prix'], 2, ',', ' ') ?> €</div>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </form>
-                    <?php endif; ?>
-                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
-    <script>
-        function submitTrajet(trajet) {
-            document.getElementById('trajet_json').value = JSON.stringify(trajet);
-            document.getElementById('choixForm').submit();
-        }
-    </script>
+</div>
+<?php include_once("../PHP/footer.php"); ?>
+<script>
+    function submitTrajet(trajet) {
+        document.getElementById('trajet_json').value = JSON.stringify(trajet);
+        document.getElementById('choixForm').submit();
+    }
+</script>
 </body>
-
 </html>

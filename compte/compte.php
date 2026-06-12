@@ -34,10 +34,13 @@ try {
     }
 
     $sql2 = "SELECT r.RES_NUM, TO_CHAR(r.RES_DATE, 'DD/MM/YYYY') AS RES_DATE,
-                    r.RES_PRIX_TOT, r.RES_NB_POINTS
-             FROM VIK_RESERVATION r
-             WHERE r.CLI_NUM = :cli_num
-             ORDER BY r.RES_DATE DESC";
+r.RES_PRIX_TOT, r.RES_NB_POINTS, c2.COM_NOM depart, c.COM_NOM arrivee
+FROM VIK_RESERVATION r
+JOIN VIK_COMMUNE c ON r.COM_CODE_INSEE_ARRIVEE = c.COM_CODE_INSEE
+JOIN VIK_COMMUNE c2 ON r.COM_CODE_INSEE_DEPART = c2.COM_CODE_INSEE
+WHERE r.CLI_NUM = :cli_num
+ORDER BY r.RES_DATE DESC";
+
     $stmt2 = $conn->prepare($sql2);
     $stmt2->execute(['cli_num' => $cli_num]);
     $reservations = $stmt2->fetchAll(PDO::FETCH_ASSOC);
@@ -66,10 +69,11 @@ try {
             --viking-bg-grey: #8A8181;
             --viking-light-grey: #E5E8E8;
             --viking-white: #FFFFFF;
+            --viking-dark: #212121;
         }
 
         body {
-            background-color: var(--viking-bg-grey);
+            background-color: #f8f9fa;
             color: var(--viking-dark-grey);
             font-family: system-ui, -apple-system, sans-serif;
         }
@@ -140,11 +144,6 @@ try {
             color: var(--viking-dark-grey);
         }
 
-        .table-custom thead {
-            background-color: var(--viking-dark-grey);
-            color: var(--viking-white);
-        }
-
         .table-custom thead th {
             border-bottom: 3px solid var(--viking-red);
             font-weight: 600;
@@ -211,6 +210,11 @@ try {
         .btn-deconnexion:hover {
             background-color: var(--viking-red);
             color: white;
+        }
+
+        .btn-outline-info {
+            color: var(--viking-dark);
+            border-color: var(--viking-dark);
         }
     </style>
 </head>
@@ -304,6 +308,8 @@ try {
                                     <th>N° Réservation</th>
                                     <th>Date</th>
                                     <th>Points gagnés</th>
+                                    <th>Départ</th>
+                                    <th>Arrivée</th>
                                     <th>Prix total</th>
                                 </tr>
                             </thead>
@@ -313,6 +319,8 @@ try {
                                         <td><strong><?= htmlspecialchars($res['RES_NUM']) ?></strong></td>
                                         <td><?= htmlspecialchars($res['RES_DATE']) ?></td>
                                         <td><?= htmlspecialchars($res['RES_NB_POINTS']) ?> pts</td>
+                                        <td><?= $res['DEPART'] ?></td>
+                                        <td><?= $res['ARRIVEE'] ?></td>
                                         <td><strong><?= htmlspecialchars($res['RES_PRIX_TOT']) ?> €</strong></td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -325,11 +333,7 @@ try {
 
     </main>
 
-    <footer class="bg-light text-center py-3 border-top text-muted small mt-auto">
-        <div class="container">
-            <p class="mb-0">&copy; 2026 Viking Transport — Développé par l'agence <strong>Asgard Tech</strong></p>
-        </div>
-    </footer>
+    <?php include_once "../PHP/footer.php"; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

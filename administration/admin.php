@@ -13,8 +13,93 @@ $user     = "agile_5";
 $password = "lemeilleurgroupe";
 $dsn      = "oci:dbname=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=$host)(PORT=$port))(CONNECT_DATA=(SID=$sid)))";
 
-$recherche = null;
+// Suppression au clic
+$supprimes = [];
+if (isset($_POST['supprimer_inactifs'])) {
+    try {
+        $conn_suppr = new PDO($dsn, $user, $password);
+        $stmt_suppr = $conn_suppr->prepare("SELECT CLI_NUM, CLI_NOM, CLI_PRENOM, CLI_VILLE,
+                                            TO_CHAR(CLI_DATE_CONNEC, 'DD/MM/YYYY') AS DATE_CONNEC
+                                            FROM VIK_CLIENT
+                                            WHERE CLI_NUM != 0 AND TYP_NUM != 6
+                                            AND CLI_DATE_CONNEC < ADD_MONTHS(SYSDATE, -24)");
+        $stmt_suppr->execute();
+        $supprimes = $stmt_suppr->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($supprimes as $s) {
+            $conn_suppr->prepare("DELETE FROM VIK_ETAPE WHERE CLI_NUM = :id")->execute(['id' => $s['CLI_NUM']]);
+            $conn_suppr->prepare("DELETE FROM VIK_RESERVATION WHERE CLI_NUM = :id")->execute(['id' => $s['CLI_NUM']]);
+        }
+        if (!empty($supprimes)) {
+            $conn_suppr->prepare("DELETE FROM VIK_CLIENT WHERE CLI_NUM != 0 AND TYP_NUM != 6
+                                  AND CLI_DATE_CONNEC < ADD_MONTHS(SYSDATE, -24)")->execute();
+        }
+        $conn_suppr = null;
+    } catch (PDOException $e) {
+        die("Erreur : " . $e->getMessage());
+    }
+}
 
+// Ajout d'une nouvelle ligne
+if (isset($_POST['ajouter_ligne'])) {
+    try {
+        $conn_add = new PDO($dsn, $user, $password);
+
+        $lig_num  = strtoupper(trim($_POST['lig_num']));
+        $lig_debu = trim($_POST['lig_debu']);
+        $lig_term = trim($_POST['lig_term']);
+
+        // Vérification de l'existence de la ligne
+        $stmt_check = $conn_add->prepare("
+    SELECT COUNT(*)
+    FROM VIK_LIGNE
+    WHERE LIG_NUM = :num
+");
+        $stmt_check->execute(['num' => $lig_num]);
+
+        if ($stmt_check->fetchColumn() > 0) {
+            throw new Exception("La ligne $lig_num existe déjà.");
+        }
+
+        // Insertion
+        $stmt_add = $conn_add->prepare("
+    INSERT INTO VIK_LIGNE (
+        LIG_NUM,
+        COM_CODE_INSEE_DEBU,
+        COM_CODE_INSEE_TERM
+    )
+    VALUES (
+        :num,
+        :debu,
+        :term
+    )
+");
+
+        $stmt_add->execute([
+            'num'  => $lig_num,
+            'debu' => $lig_debu,
+            'term' => $lig_term
+        ]);
+
+        // Créer le noeud de départ
+        $conn_add->prepare("INSERT INTO VIK_NOEUD (LIG_NUM, COM_CODE_INSEE_ARRET, COM_CODE_INSEE_SUIVANT, NOE_HEURE_PASSAGE, NOE_DISTANCE_PROCHAIN, NOE_DUREE_PROCHAIN)
+                    VALUES (:num, :debu, :term, SYSDATE, NULL, NULL)")
+            ->execute([
+                'num'  => $lig_num,
+                'debu' => $lig_debu,
+                'term' => $lig_term
+            ]);
+
+        $conn_add = null;
+    } catch (Exception $e) {
+        $message = $e->getMessage();
+        $message_type = 'danger';
+    } catch (PDOException $e) {
+        $message = "Erreur SQL : " . $e->getMessage();
+        $message_type = 'danger';
+    }
+}
+
+$recherche = null;
 if (isset($_GET['query']) && !empty(trim($_GET['query']))) {
     $recherche = htmlspecialchars($_GET['query']);
 }
@@ -46,7 +131,8 @@ if (isset($_GET['order']) && strtoupper($_GET['order']) === 'DESC') {
 
 $next_order = ($order === 'ASC') ? 'DESC' : 'ASC';
 
-function getSortUrl($column, $next_order, $recherche) {
+function getSortUrl($column, $next_order, $recherche)
+{
     $url = "?sort=" . $column . "&order=" . $next_order;
     if ($recherche !== null) {
         $url .= "&query=" . urlencode($recherche);
@@ -73,13 +159,11 @@ try {
                  OR UPPER(vt.TYP_NOM) = UPPER(:search_exact)
                  OR UPPER(c.CLI_COURRIEL) = UPPER(:search_exact)
                  OR UPPER(TO_CHAR(c.CLI_DATE_CONNEC, 'DD/MM/YYYY')) = UPPER(:search_exact)";
-
         if (is_numeric($recherche)) {
             $sql .= " OR c.CLI_NUM = :search_exact
                       OR c.CLI_NB_POINTS_TOT = :search_exact
                       OR c.CLI_TELEPHONE = :search_exact";
         }
-
         $sql .= ")";
     }
 
@@ -87,15 +171,28 @@ try {
 
     $stmt = $conn->prepare($sql);
     if ($recherche !== null) {
-        $stmt->execute([
-            'search_partial' => '%' . $recherche . '%',
-            'search_exact'   => $recherche
-        ]);
+        $stmt->execute(['search_partial' => '%' . $recherche . '%', 'search_exact' => $recherche]);
     } else {
         $stmt->execute();
     }
-
     $clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Clients inactifs
+    $stmt_inactifs = $conn->prepare("SELECT c.CLI_NUM, c.CLI_NOM, c.CLI_PRENOM, c.CLI_VILLE,
+                        TO_CHAR(c.CLI_DATE_CONNEC, 'DD/MM/YYYY') AS DATE_CONNEC
+                 FROM VIK_CLIENT c
+                 WHERE c.CLI_NUM != 0 AND c.TYP_NUM != 6
+                 AND c.CLI_DATE_CONNEC < ADD_MONTHS(SYSDATE, -12)
+                 AND c.CLI_DATE_CONNEC >= ADD_MONTHS(SYSDATE, -24)
+                 ORDER BY c.CLI_DATE_CONNEC ASC");
+    $stmt_inactifs->execute();
+    $inactifs = $stmt_inactifs->fetchAll(PDO::FETCH_ASSOC);
+
+    // Communes pour autocomplétion
+    $stmt_communes = $conn->prepare("SELECT COM_CODE_INSEE, COM_NOM FROM VIK_COMMUNE ORDER BY COM_NOM ASC");
+    $stmt_communes->execute();
+    $communes = $stmt_communes->fetchAll(PDO::FETCH_ASSOC);
+
     $conn = null;
 } catch (PDOException $e) {
     die("Erreur SQL : " . $e->getMessage());
@@ -120,11 +217,12 @@ try {
             --viking-bg-grey: #8A8181;
             --viking-light-grey: #E5E8E8;
             --viking-white: #FFFFFF;
+            --viking-dark: #212121;
         }
 
         body {
-            background-color: var(--viking-bg-grey);
-            color: var(--viking-dark-grey);
+            background-color: var(--viking-dark);
+            color: var(--viking-dark);
             font-family: system-ui, -apple-system, sans-serif;
         }
 
@@ -205,7 +303,7 @@ try {
         }
 
         .table-custom thead {
-            background-color: var(--viking-dark-grey);
+            background-color: var(--viking-bg-grey);
             color: var(--viking-white);
         }
 
@@ -253,11 +351,6 @@ try {
             padding: 3px 10px;
             border-radius: 20px;
         }
-
-        .btn-supprimer:hover {
-            background-color: var(--viking-red);
-            color: white;
-        }
     </style>
 </head>
 
@@ -267,7 +360,9 @@ try {
     <main class="container my-5 mt-4">
 
         <?php if ($message): ?>
-            <div class="alert alert-<?= $message_type ?> mb-4"><?= htmlspecialchars($message) ?></div>
+            <div class="alert alert-<?= $message_type ?> mb-4">
+                <?= htmlspecialchars($message) ?>
+            </div>
         <?php endif; ?>
 
         <section class="mb-4">
@@ -281,10 +376,15 @@ try {
             <div class="p-4 custom-card shadow-lg">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2 class="h4 mb-0">Clients (<?= count($clients) ?>)</h2>
-                    <a href="/administration/admin_stats.php" class="btn btn-sm text-white" style="background-color:#C62828"><i class="bi bi-bar-chart me-1"></i> Statistiques</a>
+                    <div class="d-flex gap-2">
+                        <a href="/administration/admin_stats.php" class="btn btn-sm text-white" style="background-color:#C62828"><i class="bi bi-bar-chart me-1"></i> Statistiques</a>
+                        <a href="#" class="btn btn-sm text-white" style="background-color:#706767" data-bs-toggle="modal" data-bs-target="#modalInactifs">
+                            <i class="bi bi-person-x me-1"></i> Clients inactifs (<?= count($inactifs) ?>)
+                        </a>
+                    </div>
                 </div>
 
-                <form action="admin.php" class="d-flex justify-content-between align-items-center" method="GET">
+                <form action="admin.php#clients" class="d-flex justify-content-between align-items-center" method="GET">
                     <input type="text" class="form-control me-2" name="query" placeholder="Rechercher un client..." value="<?= isset($_GET['query']) ? htmlspecialchars($_GET['query']) : '' ?>" required>
                     <div class="d-flex gap-2">
                         <button class="btn btn-outline-danger" type="submit">Rechercher</button>
@@ -332,36 +432,21 @@ try {
         </section>
 
         <?php
-        // Tri lignes
-        $allowed_sorts_lignes = [
-            'num'    => 'l.LIG_NUM',
-            'depart' => 'c1.COM_NOM',
-            'arrivee' => 'c2.COM_NOM'
-        ];
-
+        $allowed_sorts_lignes = ['num' => 'l.LIG_NUM', 'depart' => 'c1.COM_NOM', 'arrivee' => 'c2.COM_NOM'];
         $sort_by_l = 'l.LIG_NUM';
         if (isset($_GET['sort_l']) && array_key_exists($_GET['sort_l'], $allowed_sorts_lignes)) {
             $sort_by_l = $allowed_sorts_lignes[$_GET['sort_l']];
         }
-
         $order_l = 'ASC';
-        if (isset($_GET['order_l']) && strtoupper($_GET['order_l']) === 'DESC') {
-            $order_l = 'DESC';
-        }
-
+        if (isset($_GET['order_l']) && strtoupper($_GET['order_l']) === 'DESC') $order_l = 'DESC';
         $next_order_l = ($order_l === 'ASC') ? 'DESC' : 'ASC';
-
         $recherche_l = null;
-        if (isset($_GET['query_l']) && !empty(trim($_GET['query_l']))) {
-            $recherche_l = htmlspecialchars($_GET['query_l']);
-        }
+        if (isset($_GET['query_l']) && !empty(trim($_GET['query_l']))) $recherche_l = htmlspecialchars($_GET['query_l']);
 
         function getSortUrlL($column, $next_order_l, $recherche_l)
         {
             $url = "?sort_l=" . $column . "&order_l=" . $next_order_l;
-            if ($recherche_l !== null) {
-                $url .= "&query_l=" . urlencode($recherche_l);
-            }
+            if ($recherche_l !== null) $url .= "&query_l=" . urlencode($recherche_l);
             return $url . "#lignes";
         }
 
@@ -370,15 +455,10 @@ try {
                FROM VIK_LIGNE l
                JOIN VIK_COMMUNE c1 ON l.COM_CODE_INSEE_DEBU = c1.COM_CODE_INSEE
                JOIN VIK_COMMUNE c2 ON l.COM_CODE_INSEE_TERM = c2.COM_CODE_INSEE";
-
         if ($recherche_l !== null) {
-            $sql_lignes .= " WHERE (UPPER(l.LIG_NUM) LIKE UPPER(:search_l)
-                     OR UPPER(c1.COM_NOM) LIKE UPPER(:search_l)
-                     OR UPPER(c2.COM_NOM) LIKE UPPER(:search_l))";
+            $sql_lignes .= " WHERE (UPPER(l.LIG_NUM) LIKE UPPER(:search_l) OR UPPER(c1.COM_NOM) LIKE UPPER(:search_l) OR UPPER(c2.COM_NOM) LIKE UPPER(:search_l))";
         }
-
         $sql_lignes .= " ORDER BY " . $sort_by_l . " " . $order_l;
-
         $stmt_lignes = $conn2->prepare($sql_lignes);
         if ($recherche_l !== null) {
             $stmt_lignes->execute(['search_l' => '%' . $recherche_l . '%']);
@@ -391,9 +471,14 @@ try {
 
         <section class="mt-4" id="lignes">
             <div class="p-4 custom-card shadow-lg">
-                <h2 class="h4 mb-4">Lignes (<?= count($lignes) ?>)</h2>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="h4 mb-0">Lignes (<?= count($lignes) ?>)</h2>
+                    <a href="#" class="btn btn-sm text-white" style="background-color:#C62828" data-bs-toggle="modal" data-bs-target="#modalAjouterLigne">
+                        <i class="bi bi-plus-circle me-1"></i> Ajouter une ligne
+                    </a>
+                </div>
 
-                <form action="admin.php" class="d-flex justify-content-between align-items-center mb-3" method="GET">
+                <form action="admin.php#lignes" class="d-flex justify-content-between align-items-center mb-3" method="GET">
                     <input type="text" class="form-control me-2" name="query_l" placeholder="Rechercher une ligne..." value="<?= isset($_GET['query_l']) ? htmlspecialchars($_GET['query_l']) : '' ?>" required>
                     <div class="d-flex gap-2">
                         <button class="btn btn-outline-danger" type="submit">Rechercher</button>
@@ -426,6 +511,106 @@ try {
             </div>
         </section>
 
+        <!-- Modale clients inactifs -->
+        <div class="modal fade" id="modalInactifs" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header" style="border-bottom: 3px solid #C62828;">
+                        <h5 class="modal-title fw-bold">Clients inactifs</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <?php if (empty($inactifs)): ?>
+                            <p class="text-muted">Aucun client inactif.</p>
+                        <?php else: ?>
+                            <div class="table-responsive">
+                                <table class="table table-custom table-striped align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>N°</th>
+                                            <th>Nom</th>
+                                            <th>Prénom</th>
+                                            <th>Ville</th>
+                                            <th>Dernière connexion</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($inactifs as $i): ?>
+                                            <tr style="cursor:pointer" onclick="window.location='admin_client.php?id=<?= htmlspecialchars($i['CLI_NUM']) ?>'">
+                                                <td><strong><?= htmlspecialchars($i['CLI_NUM']) ?></strong></td>
+                                                <td><?= htmlspecialchars($i['CLI_NOM']) ?></td>
+                                                <td><?= htmlspecialchars($i['CLI_PRENOM']) ?></td>
+                                                <td><?= htmlspecialchars($i['CLI_VILLE'] ?: '—') ?></td>
+                                                <td><?= htmlspecialchars($i['DATE_CONNEC']) ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (!empty($supprimes)): ?>
+                            <hr>
+                            <p class="fw-semibold text-danger"><i class="bi bi-trash me-1"></i> Ces clients ont été supprimés (inactifs depuis plus de 2 ans) :</p>
+                            <ul class="list-group">
+                                <?php foreach ($supprimes as $s): ?>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span><?= htmlspecialchars($s['CLI_PRENOM']) ?> <?= htmlspecialchars($s['CLI_NOM']) ?> — <?= htmlspecialchars($s['CLI_VILLE'] ?: '—') ?></span>
+                                        <span class="badge bg-danger">Supprimé — <?= htmlspecialchars($s['DATE_CONNEC']) ?></span>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+                    </div>
+                    <div class="modal-footer">
+                        <form method="POST">
+                            <button type="submit" name="supprimer_inactifs" class="btn btn-sm btn-danger"
+                                onclick="return confirm('Supprimer tous les comptes inactifs depuis plus de 2 ans ?')">
+                                <i class="bi bi-trash me-1"></i> Supprimer les comptes +2 ans
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modale ajouter une ligne -->
+        <div class="modal fade" id="modalAjouterLigne" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header" style="border-bottom: 3px solid #C62828;">
+                        <h5 class="modal-title fw-bold">Ajouter une ligne</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Numéro de ligne</label>
+                                <input type="text" name="lig_num" class="form-control" placeholder="ex: 20A" required>
+                            </div>
+                            <div class="mb-3 position-relative">
+                                <label class="form-label fw-semibold small">Ville de départ</label>
+                                <input type="text" id="input_debu" class="form-control" placeholder="ex: Caen" autocomplete="off">
+                                <input type="hidden" name="lig_debu" id="hidden_debu">
+                                <div id="suggestions_debu" class="list-group mt-1" style="position:absolute;z-index:1000;width:100%;"></div>
+                            </div>
+                            <div class="mb-3 position-relative">
+                                <label class="form-label fw-semibold small">Ville d'arrivée</label>
+                                <input type="text" id="input_term" class="form-control" placeholder="ex: Cherbourg-en-Cotentin" autocomplete="off">
+                                <input type="hidden" name="lig_term" id="hidden_term">
+                                <div id="suggestions_term" class="list-group mt-1" style="position:absolute;z-index:1000;width:100%;"></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+                            <button type="submit" name="ajouter_ligne" class="btn btn-sm text-white" style="background-color:#C62828">
+                                <i class="bi bi-plus-circle me-1"></i> Ajouter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <footer class="bg-light text-center py-3 border-top text-muted small mt-auto">
@@ -435,6 +620,56 @@ try {
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        <?php if (isset($_POST['supprimer_inactifs'])): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                new bootstrap.Modal(document.getElementById('modalInactifs')).show();
+            });
+        <?php endif; ?>
+
+        <?php if (isset($_POST['ajouter_ligne'])): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                window.location.hash = 'lignes';
+            });
+        <?php endif; ?>
+
+        // Autocomplétion communes
+        const communes = <?= json_encode(array_map(fn($c) => ['code' => $c['COM_CODE_INSEE'], 'nom' => $c['COM_NOM']], $communes)) ?>;
+
+        function setupAutocomplete(inputId, hiddenId, suggestionsId) {
+            const input = document.getElementById(inputId);
+            const hidden = document.getElementById(hiddenId);
+            const suggestions = document.getElementById(suggestionsId);
+
+            input.addEventListener('input', function() {
+                const val = this.value.toLowerCase().trim();
+                suggestions.innerHTML = '';
+                hidden.value = '';
+                if (val.length < 2) return;
+
+                const matches = communes.filter(c => c.nom.toLowerCase().includes(val)).slice(0, 8);
+                matches.forEach(c => {
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'list-group-item list-group-item-action';
+                    item.textContent = c.nom + ' (' + c.code + ')';
+                    item.addEventListener('click', function() {
+                        input.value = c.nom;
+                        hidden.value = c.code;
+                        suggestions.innerHTML = '';
+                    });
+                    suggestions.appendChild(item);
+                });
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target)) suggestions.innerHTML = '';
+            });
+        }
+
+        setupAutocomplete('input_debu', 'hidden_debu', 'suggestions_debu');
+        setupAutocomplete('input_term', 'hidden_term', 'suggestions_term');
+    </script>
 </body>
 
 </html>

@@ -117,6 +117,11 @@ session_start();
                 include_once "edit-ville.php";
                 break;
         }
+
+        if ($_SESSION["error"] == "noChange") {
+            echo ("<p class=\"text-center text-danger\">Veuillez entrer votre adresse courriel et votre mot de passe.</p>");
+        }
+        unset($_SESSION["error"]);
     ?>
 
 </div>

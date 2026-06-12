@@ -1,3 +1,5 @@
+<link rel="icon" type="image/x-icon" href="/images/logo_viking.png">
+
 <header class="site-header py-3">
     <nav>
         <ul class="nav nav-underline d-flex align-items-center px-3">
@@ -22,7 +24,7 @@
                     <a class="btn btn-outline-primary fw-semibold" href="/compte/compte.php">
                         <i class="bi bi-person-gear me-1"></i>Mon compte
                     </a>
-                    <a class="btn btn-outline-danger fw-semibold" href="/auth/deconnexion.php">Deconnexion</a>
+                    <a class="btn btn-outline-primary fw-semibold" href="/auth/deconnexion.php">Deconnexion</a>
                 <?php else: ?>
                     <a class="btn btn-outline-primary fw-semibold" href="/auth/connexion.php">
                         <i class="bi bi-person me-1"></i>Se connecter

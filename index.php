@@ -98,7 +98,7 @@ try {
         <div class="row justify-content-center">
             <div class="col-lg-10">
                 <div class="card p-4 shadow text-dark bg-white">
-                    <form method="GET" action="reservation/reservation_choix.php" class="row g-3 align-items-end text-start">
+                    <form method="GET" action="reservation/reservation_trajet.php" class="row g-3 align-items-end text-start">
                         <div class="col-md-5">
                             <label class="form-label fw-bold">Commune de départ</label>
                             <select name="depart" class="form-select" required>
@@ -140,7 +140,7 @@ try {
                     </div>
                     <h3 class="h5 fw-bold text-viking-dark">Lignes & Réseau</h3>
                     <p class="text-muted small">Consultez l'ensemble de nos lignes de cars normands traversant la région.</p>
-                    <a href="#" class="btn btn-outline-secondary btn-sm mt-2">Voir le plan</a>
+                    <a href="/reservation/lignes.php" class="btn btn-outline-secondary btn-sm mt-2">Voir le plan</a>
                 </div>
             </div>
         </div>
@@ -155,7 +155,7 @@ try {
                     </div>
                     <h3 class="h5 fw-bold text-viking-dark">Horaires en temps réel</h3>
                     <p class="text-muted small">Ne ratez plus jamais votre car. Visualisez les fiches horaires par portion de ligne.</p>
-                    <a href="#" class="btn btn-outline-secondary btn-sm mt-2">Vérifier un horaire</a>
+                    <a href="/reservation/lignes.php#lignes" class="btn btn-outline-secondary btn-sm mt-2">Vérifier un horaire</a>
                 </div>
             </div>
         </div>
@@ -170,7 +170,7 @@ try {
                     </div>
                     <h3 class="h5 fw-bold text-viking-dark">Grille Tarifaire</h3>
                     <p class="text-muted small">Consultez notre tarification simple et transparente calculée selon la distance parcourue.</p>
-                    <a href="tarif.html" class="btn btn-outline-secondary btn-sm mt-2">Découvrir les tarifs</a>
+                    <a href="/reservation/tarif.php" class="btn btn-outline-secondary btn-sm mt-2">Découvrir les tarifs</a>
                 </div>
             </div>
         </div>
@@ -187,11 +187,7 @@ try {
     </section>
 <?php endif; ?>
 
-<footer class="bg-light text-center py-3 border-top text-muted small">
-    <div class="container">
-        <p class="mb-0">© 2026 Viking Transport - Développé par l'agence <strong>Asgard Tech</strong></p>
-    </div>
-</footer>
+<?php include_once "PHP/footer.php"; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

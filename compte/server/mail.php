@@ -25,6 +25,17 @@ if ($ancienMail === $nouveauMail) {
     die();
 }
 
+$queryEmails = $conn->prepare("SELECT cli_courriel FROM vik_client");
+$queryEmails->execute();
+
+foreach ($queryEmails->fetchAll(PDO::FETCH_COLUMN) as $email) {
+    if ($_POST["mail"] == $email) {
+        $_SESSION["error"] = "alreadyExists";
+        header("Location: /compte/edit.php");
+        die();
+    }
+}
+
 $update = $conn->prepare("UPDATE vik_client 
 SET cli_courriel = :mail
 WHERE cli_num = :num");

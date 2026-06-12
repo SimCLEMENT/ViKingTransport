@@ -14,6 +14,17 @@ try {
     die("Erreur de connexion : " . $e->getMessage());
 }
 
+$sqlCoords = "SELECT COM_CODE_INSEE, COM_NOM, LAT, LNG FROM VIK_COMMUNE WHERE LAT IS NOT NULL";
+$stmt = $conn->query($sqlCoords);
+$communesCoords = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+foreach ($communesCoords as &$c) {
+    $c['LAT'] = (float) str_replace(',', '.', $c['LAT']);
+    $c['LNG'] = (float) str_replace(',', '.', $c['LNG']);
+}
+$communesCoordsJson = json_encode($communesCoords);
+
 $sqlLignes = "SELECT TRIM(LIG_NUM) AS LIG_NUM, COM_CODE_INSEE_DEBU, COM_CODE_INSEE_TERM FROM VIK_LIGNE ORDER BY LENGTH(TRIM(LIG_NUM)) ASC, LIG_NUM ASC";
 $stmt = $conn->query($sqlLignes);
 $lignesData = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -33,6 +44,44 @@ foreach ($noeuds as $n) {
     $ligneNoeuds[$lig]['departs'][$dep] = true;
     $ligneNoeuds[$lig]['arrivees'][$arr] = true;
 }
+
+// Reconstruction de l'ordre des arrêts par ligne
+$lignesOrdonnees = [];
+foreach ($ligneNoeuds as $lig => $data) {
+    // Trouver le départ : un nœud qui est dans 'departs' mais jamais dans 'arrivees'
+    $departs = array_keys($ligneNoeuds[$lig]['departs']);
+    $arrivees = array_keys($ligneNoeuds[$lig]['arrivees']);
+    $debut = null;
+    foreach ($departs as $d) {
+        if (!in_array($d, $arrivees)) {
+            $debut = $d;
+            break;
+        }
+    }
+    if (!$debut) $debut = $departs[0] ?? null;
+    if (!$debut) continue;
+
+    // Reconstruire la chaîne ordonnée
+    // Construire une map depart => suivant
+    $suivantMap = [];
+    foreach ($noeuds as $n) {
+        if ($n['LIG_NUM'] === $lig) {
+            $suivantMap[$n['DEPART']] = $n['ARRIVEE'];
+        }
+    }
+
+    $ordre = [$debut];
+    $current = $debut;
+    $visited = [$debut => true];
+    while (isset($suivantMap[$current]) && !isset($visited[$suivantMap[$current]])) {
+        $current = $suivantMap[$current];
+        $visited[$current] = true;
+        $ordre[] = $current;
+    }
+    $lignesOrdonnees[$lig] = $ordre;
+}
+
+$lignesOrdonneesJson = json_encode($lignesOrdonnees);
 
 $terminusParLigne = [];
 foreach ($lignesData as $l) {
@@ -81,6 +130,8 @@ foreach ($lignesData as $l) {
         'VILLE_ARRIVEE' => $villeArrivee
     ];
 }
+
+$lignesJson = json_encode($lignes);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -88,6 +139,7 @@ foreach ($lignesData as $l) {
 <head>
     <meta charset="UTF-8">
     <title>Lignes - Viking Transport</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
@@ -228,7 +280,7 @@ foreach ($lignesData as $l) {
 
     <?php include_once("../PHP/header.php") ?>
 
-    <main class="container mb-5">
+    <main class="container mb-5 mt-4">
         <section class="mb-4">
             <div class="p-4 custom-card shadow-lg">
                 <h2 class="h4 mb-3">Nos lignes de car</h2>
@@ -253,9 +305,7 @@ foreach ($lignesData as $l) {
         <section class="mb-4">
             <div class="p-4 custom-card shadow-lg text-center">
                 <h2 class="h4 mb-4 text-start">Plan du réseau Viking Transport</h2>
-                <div class="bg-light p-2 rounded border d-flex justify-content-center align-items-center" style="overflow: hidden; height: 600px;">
-                    <img id="carte-zoom" src="../images/carte.png" alt="Carte des lignes Viking Transport" style="height: 100%; max-width: 100%; object-fit: contain; cursor: grab; transition: transform 0.05s ease-out;">
-                </div>
+                <div id="map" style="height: 600px; border-radius: 8px;"></div>
             </div>
         </section>
 
@@ -290,41 +340,76 @@ foreach ($lignesData as $l) {
         </section>
     </main>
 
-    <footer class="bg-light text-center py-3 border-top text-muted small">
-        <div class="container">
-            <p class="mb-0">© 2026 Viking Transport — Développé par l'agence Asgard Tech</p>
-        </div>
-    </footer>
-    <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
+    <?php include_once("../PHP/footer.php"); ?>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            const element = document.getElementById('carte-zoom');
+        const map = L.map('map').setView([49.1, -0.4], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
-            const initPanzoom = () => {
-                const panzoom = Panzoom(element, {
-                    maxScale: 8,
-                    minScale: 1,
-                    startScale: 1,
-                    contain: 'outside',
-                    canvas: true,
-                });
+        const communes = <?= $communesCoordsJson ?>;
+        const lignesOrdonnees = <?= $lignesOrdonneesJson ?>;
+        const lignesInfo = <?= $lignesJson ?>;
 
-                element.parentElement.addEventListener('wheel', panzoom.zoomWithWheel);
+        // Index des communes par code INSEE
+        const communeIndex = {};
+        communes.forEach(c => {
+            communeIndex[c.COM_CODE_INSEE] = c;
+        });
 
-                element.addEventListener('mousedown', () => {
-                    element.style.cursor = 'grabbing';
-                });
-                element.addEventListener('mouseup', () => {
-                    element.style.cursor = 'grab';
-                });
-            };
-
-            if (element.complete) {
-                initPanzoom();
-            } else {
-                element.addEventListener('load', initPanzoom);
+        // Génère une couleur HSL stable et lisible à partir d'une chaîne
+        function couleurLigne(ligNum) {
+            let hash = 0;
+            for (let i = 0; i < ligNum.length; i++) {
+                hash = ligNum.charCodeAt(i) + ((hash << 5) - hash);
             }
+            const hue = Math.abs(hash) % 360;
+            return `hsl(${hue}, 75%, 42%)`;
+        }
+
+        // Tracer les lignes
+        Object.entries(lignesOrdonnees).forEach(([ligNum, arrets]) => {
+            const coords = arrets
+                .map(code => communeIndex[code])
+                .filter(c => c && c.LAT && c.LNG)
+                .map(c => [c.LAT, c.LNG]);
+
+            if (coords.length < 2) return;
+
+            const couleur = couleurLigne(ligNum);
+            const ligInfo = lignesInfo.find(l => l.LIG_NUM === ligNum);
+            const label = ligInfo ?
+                `Ligne ${ligNum} : ${ligInfo.VILLE_DEPART} → ${ligInfo.VILLE_ARRIVEE}` :
+                `Ligne ${ligNum}`;
+
+            L.polyline(coords, {
+                color: couleur,
+                weight: 3,
+                opacity: 0.85
+            }).addTo(map).bindPopup(`<strong style="color:${couleur}">${label}</strong>`);
+        });
+
+        // Marqueurs des communes
+        communes.forEach(c => {
+            L.marker([c.LAT, c.LNG], {
+                icon: L.divIcon({
+                    className: '',
+                    html: `<div style="
+                width: 10px; height: 10px;
+                background: #da2121;
+                border: 2px solid white;
+                border-radius: 50%;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>`,
+                    iconSize: [10, 10],
+                    iconAnchor: [5, 5]
+                })
+            }).addTo(map).bindPopup(`
+        <div style="text-align:center; min-width:120px;">
+            <strong style="color:#333;">${c.COM_NOM}</strong>
+        </div>
+    `);
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

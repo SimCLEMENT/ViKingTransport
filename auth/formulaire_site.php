@@ -10,7 +10,7 @@ session_start();
     <title>VikingTransport — Créer un compte</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-	<link rel="icon" type="image/x-icon" href="../images/logo_blanc.png">
+	<link rel="icon" type="image/x-icon" href="../images/logo_sans_texte_blanc.png">
 
     <style>
         :root {
@@ -27,7 +27,7 @@ session_start();
         }
 
         body {
-            background-color: var(--viking-bg-grey);
+            background-color: #f8f9fa;
             font-family: system-ui, -apple-system, sans-serif;
             min-height: 100vh;
             display: flex;
@@ -168,12 +168,6 @@ session_start();
                 </div>
 
                 <div class="d-flex flex-column gap-2">
-                    <?php
-                        if ($_SESSION["error"] == "alreadyExists") {
-                            echo "<p class=\"text-center text-danger\">Un utilisateur avec cette adresse e-mail existe déjà !</p>";
-                        }
-                        unset($_SESSION["error"]);
-                    ?>
                     <button type="submit" class="btn w-100 fw-semibold text-white" style="background-color: #C62828;">Créer mon compte</button>
                     <a href="connexion.php" class="btn w-100 fw-semibold" style="border: 1.5px solid #C62828; color: #C62828;">J'ai déjà un compte</a>
                 </div>
@@ -183,11 +177,8 @@ session_start();
         </div>
     </div>
 
-    <footer class="bg-light text-center py-3 border-top text-muted small mt-auto">
-        <div class="container">
-            <p class="mb-0">© 2026 Viking Transport — Développé par l'agence <strong>Asgard Tech</strong></p>
-        </div>
-    </footer>
+    <?php include_once("../PHP/footer.php"); ?>
+
 
     <script>
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

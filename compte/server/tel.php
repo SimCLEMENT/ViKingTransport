@@ -21,7 +21,7 @@ $ancientelephone = $queryAncientelephone->fetchColumn();
 
 if ($ancientelephone === $nouveautelephone) {
     $_SESSION["error"] = "noChange";
-    header("Location: /compte/compte.php");
+    header("Location: /compte/edit.php");
     die();
 }
 

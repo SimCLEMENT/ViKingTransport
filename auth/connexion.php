@@ -113,9 +113,15 @@ session_start();
                     <input type="email" class="form-control" id="email" name="email" placeholder="prenom.nom@exemple.fr">
                 </div>
 
+                <label for="password" class="form-label fw-semibold small">Mot de passe</label>
                 <div class="mb-4">
-                    <label for="password" class="form-label fw-semibold small">Mot de passe</label>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Mot de passe">
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Mot de passe">
+
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('password', 'showPwd')">
+                            <i class="bi bi-eye" id="showPwd"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="d-flex flex-column gap-2">
@@ -140,6 +146,8 @@ session_start();
                         echo ("<p class=\"text-center text-danger\">Votre mot de passe ou adresse mail ne correspond pas !</p>");
                     } elseif ($_SESSION["error"] == "accCreated") {
                         echo ("<p class=\"text-center text-info\">Votre compte a été créé.</p>");
+                    } elseif ($_SESSION["error"] == "doesntExist") {
+                        echo ("<p class=\"text-center text-danger\">Ce compte n'existe pas.</p>");
                     }
                     unset($_SESSION["error"]);
                 }
@@ -150,12 +158,9 @@ session_start();
     </div>
 
 
-    <footer class="fixed-bottom bg-light text-center py-3 border-top text-muted small">
-        <div class="container">
-            <p class="mb-0">© 2026 Viking Transport — Développé par l'agence <strong>Asgard Tech</strong></p>
-        </div>
-    </footer>
+    <?php include_once("../PHP/footer.php"); ?>
 
+    <script src="../JS/password-verify.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

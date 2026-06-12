@@ -16,7 +16,6 @@ try {
     $communes = $conn->query("SELECT TRIM(COM_CODE_INSEE) AS CODE, COM_NOM FROM VIK_COMMUNE ORDER BY COM_NOM ASC")->fetchAll(PDO::FETCH_KEY_PAIR);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Construction du parcours : départ -> (étapes) -> arrivée
         $parcours = [];
         $parcours[] = $_POST['depart'];
         if (!empty($_POST['etapes'])) {
@@ -26,31 +25,36 @@ try {
         }
         $parcours[] = $_POST['arrivee'];
 
-        // Sauvegarde en session
-        $_SESSION['client_info'] = [
-            'nom'    => $_POST['nom'],
-            'prenom' => $_POST['prenom'],
-            'villes' => $parcours
-        ];
-
-        header("Location: reservation_choix.php");
-        exit;
+        // Vérification : on interdit uniquement si départ == arrivée ET aucune étape
+        $hasEtape = count($parcours) > 2;
+        if (!$hasEtape && $parcours[0] == $parcours[1]) {
+            $error_message = "La ville de départ et la ville d'arrivée ne peuvent pas être identiques lorsqu'aucune étape n'est ajoutée.";
+        } else {
+            $_SESSION['client_info'] = [
+                'nom'    => $_POST['nom'],
+                'prenom' => $_POST['prenom'],
+                'villes' => $parcours
+            ];
+            header("Location: reservation_choix.php");
+            exit;
+        }
     }
 } catch (Exception $e) {
     $error_message = $e->getMessage();
 }
+
+$get_depart = isset($_GET['depart']) ? $_GET['depart'] : '';
+$get_arrivee = isset($_GET['arrivee']) ? $_GET['arrivee'] : '';
 ?>
 
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
     <title>Planifier un trajet - Viking Transport</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-
         :root {
             --viking-red: #C62828;
             --viking-dark-red: #9b1e1e;
@@ -61,36 +65,49 @@ try {
             --viking-dark: #212121;
         }
 
+        html { overflow-y: scroll; }
+        
         body {
-            background-color: var(#f8f9fa);
+            background-color: #f8f9fa;
             font-family: system-ui, sans-serif;
         }
-
-        .btn-primary {
-            color: var(--viking-red);
-            border-color: var(--viking-red);
-            --bs-btn-active-bg: #9b1e1e;
-            --bs-btn-active-color: var(--viking-white);
-            --bs-btn-active-border-color: #9b1e1e;
-            --bs-btn-focus-shadow-rgb: 198, 40, 40;
-            --bs-btn-active-shadow: none;
-        }
-
         .btn-primary {
             background-color: var(--viking-red);
             color: white;
             border: none;
         }
-
         .btn-primary:hover {
             background-color: #9b1e1e;
             color: white;
         }
+
+        .btn-outline-primary {
+            color: var(--viking-red);
+            border-color: var(--viking-red);
+            --bs-btn-active-bg: var(--viking-red);
+            --bs-btn-active-color: var(--viking-white);
+            --bs-btn-active-border-color: var(--viking-red);
+            --bs-btn-focus-shadow-rgb: 198, 40, 40;
+            --bs-btn-active-shadow: none;
+        }
+        .btn-outline-primary:hover {
+            color: var(--viking-white);
+            border-color: var(--viking-red);
+            background-color: var(--viking-red);
+        }
+
+        .nav-col { flex: 1; display: flex; align-items: center; }
+        .nav-col.nav-center { justify-content: center; gap: 2rem; }
+        .nav-col.nav-right { justify-content: flex-end; }
+        .nav-link { color: var(--viking-red); }
+        .nav-link:hover { color: var(--viking-dark-red); }
+        .nav-link.active { color: var(--viking-dark-red) !important; font-weight: bold; }
+
     </style>
 </head>
-
-<body class="d-flex align-items-center min-vh-100">
-    <main class="container">
+<body class="d-flex flex-column min-vh-100">
+<?php include_once("../PHP/header.php"); ?>
+    <main class="container py-5">
         <div class="row justify-content-center">
             <div class="col-lg-7">
                 <div class="card shadow-lg border-0 p-5 rounded-4">
@@ -104,11 +121,11 @@ try {
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-muted">Nom</label>
-                                <input type="text" class="form-control" name="nom" required>
+                                <input type="text" class="form-control" name="nom" required <?php if (isset($_SESSION["nom"])) echo 'value="' . $_SESSION["nom"] . '"'; ?>>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-muted">Prénom</label>
-                                <input type="text" class="form-control" name="prenom" required>
+                                <input type="text" class="form-control" name="prenom" required <?php if (isset($_SESSION["prenom"])) echo 'value="' . $_SESSION["prenom"] . '"'; ?>>
                             </div>
                         </div>
 
@@ -118,7 +135,7 @@ try {
                                 <select class="form-select" name="depart" required>
                                     <option value="">Sélectionnez le départ...</option>
                                     <?php foreach ($communes as $code => $nom): ?>
-                                        <option value="<?= $code ?>"><?= htmlspecialchars($nom) ?></option>
+                                        <option value="<?= $code ?>" <?= ($code == $get_depart) ? 'selected' : '' ?>><?= htmlspecialchars($nom) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -134,7 +151,7 @@ try {
                                 <select class="form-select" name="arrivee" required>
                                     <option value="">Sélectionnez l'arrivée...</option>
                                     <?php foreach ($communes as $code => $nom): ?>
-                                        <option value="<?= $code ?>"><?= htmlspecialchars($nom) ?></option>
+                                        <option value="<?= $code ?>" <?= ($code == $get_arrivee) ? 'selected' : '' ?>><?= htmlspecialchars($nom) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -155,6 +172,7 @@ try {
         </div>
     </main>
 
+
     <script>
         const communes = <?= json_encode($communes) ?>;
 
@@ -174,6 +192,6 @@ try {
             document.getElementById('etapes-container').insertAdjacentHTML('beforeend', html);
         }
     </script>
+<?php include_once "../PHP/footer.php"; ?>
 </body>
-
 </html>

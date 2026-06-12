@@ -97,7 +97,6 @@ try {
     if (!$ville_arrivee) {
         $ville_arrivee = $end;
     }
-
 } catch (PDOException $e) {
     die("Erreur SQL : " . $e->getMessage());
 }
@@ -105,6 +104,7 @@ try {
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -121,10 +121,11 @@ try {
             --viking-bg-grey: #8A8181;
             --viking-light-grey: #E5E8E8;
             --viking-white: #FFFFFF;
+            --viking-dark: #212121;
         }
 
         body {
-            background-color: var(--viking-bg-grey);
+            background-color: #f8f9fa;
             color: var(--viking-dark-grey);
             font-family: system-ui, -apple-system, sans-serif;
         }
@@ -132,17 +133,32 @@ try {
         header {
             background-color: var(--viking-white);
             border-bottom: 5px solid var(--viking-red);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         }
 
-        .nav-link { color: var(--viking-red); }
-        .nav-link:hover { color: var(--viking-dark-red); }
-        .nav-link.active { color: var(--viking-dark-red) !important; font-weight: bold; }
+        .nav-link {
+            color: var(--viking-red);
+        }
+
+        .nav-link:hover {
+            color: var(--viking-dark-red);
+        }
+
+        .nav-link.active {
+            color: var(--viking-dark-red) !important;
+            font-weight: bold;
+        }
 
         .btn-outline-primary {
             color: var(--viking-red);
             border-color: var(--viking-red);
+            --bs-btn-active-bg: #9b1e1e;
+            --bs-btn-active-color: var(--viking-white);
+            --bs-btn-active-border-color: #9b1e1e;
+            --bs-btn-focus-shadow-rgb: 198, 40, 40;
+            --bs-btn-active-shadow: none;
         }
+
         .btn-outline-primary:hover {
             color: var(--viking-white);
             border-color: var(--viking-red);
@@ -156,7 +172,7 @@ try {
         }
 
         h2.h4 {
-            color: var(--viking-dark-grey);
+            color: var(--viking-dark);
             font-weight: 700;
             position: relative;
             padding-left: 14px;
@@ -178,11 +194,6 @@ try {
             --bs-table-striped-bg: #F9FAFA;
             --bs-table-hover-bg: #F2F4F4;
             color: var(--viking-dark-grey);
-        }
-
-        .table-custom thead {
-            background-color: var(--viking-dark-grey);
-            color: var(--viking-white);
         }
 
         .table-custom thead th {
@@ -211,16 +222,34 @@ try {
             background-color: var(--viking-dark-red);
             color: var(--viking-white);
         }
+
+        
+
+        .nav-col {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-col.nav-center {
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .nav-col.nav-right {
+            justify-content: flex-end;
+        }
     </style>
 </head>
+
 <body>
 
-<?php include_once("../PHP/header.php") ?>
+    <?php include_once("../PHP/header.php") ?>
 
 
-<main class="container mb-5">
+    <main class="container mb-5">
 
-        <section class="mb-4">
+        <section class="mb-4 mt-4">
             <div class="p-4 custom-card shadow-lg">
                 <h2 class="h4 mb-1">Ligne <?= htmlspecialchars($ligne_id) ?></h2>
                 <p class="text-muted mb-0">Horaires des trajets disponibles sur cette ligne.</p>
@@ -241,13 +270,13 @@ try {
                             </tr>
                         </thead>
                         <tbody>
-                        <?php foreach ($heures as $h): ?>
-                            <tr>
-                                <td><strong><?= htmlspecialchars($h) ?></strong></td>
-                                <td><?= htmlspecialchars($ville_depart) ?></td>
-                                <td><?= htmlspecialchars($ville_arrivee) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
+                            <?php foreach ($heures as $h): ?>
+                                <tr>
+                                    <td><strong><?= htmlspecialchars($h) ?></strong></td>
+                                    <td><?= htmlspecialchars($ville_depart) ?></td>
+                                    <td><?= htmlspecialchars($ville_arrivee) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
@@ -266,12 +295,9 @@ try {
 
     </main>
 
-    <footer class="bg-light text-center py-3 border-top text-muted small">
-        <div class="container">
-            <p class="mb-0">© 2026 Viking Transport — Développé par l'agence <strong>Asgard Tech</strong></p>
-        </div>
-    </footer>
+    <?php include_once "../PHP/footer.php"; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

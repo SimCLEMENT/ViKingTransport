@@ -30,7 +30,7 @@ $ancienPrenom = $queryAncienPrenom->fetchColumn();
 
 if ($ancienNom === $nouveauNom && $ancienPrenom === $nouveauPrenom) {
     $_SESSION["error"] = "noChange";
-    header("Location: /compte/compte.php");
+    header("Location: /compte/edit.php");
     die();
 }
 

@@ -52,3 +52,7 @@ if (isset($_SESSION["id"])) {
     header("Location:/");
     die();
 }
+
+$_SESSION["error"] = "doesntExist";
+header("Location:/auth/connexion.php");
+die();
