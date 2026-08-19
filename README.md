@@ -70,3 +70,13 @@ Le projet combine trois compétences :
   - **Rétrospective** après chaque recette (tableau Bien / Moins bien / Question à creuser / Qu'en tirer ?)
   - **Stand-up meeting** quotidien (15 min max, debout, 3 questions : hier / aujourd'hui / blocages)
 
+---
+
+## 👥 Groupe
+- CLEMENT Simon
+- LANGLOIS Kylian
+- MUNOZ Paul
+- NAVARRO Pierre
+- OUASRI Hamza
+- TOULORGE Nathan
+- WALLAERT-BEAUGENDRE Noor
