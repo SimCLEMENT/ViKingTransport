@@ -8,8 +8,8 @@
 	$db_passwordOracle = "lemeilleurgroupe"; // 
 	$dbOracle = "oci:dbname=harpagon.unicaen.fr:1521/info.harpagon.unicaen.fr;charset=AL32UTF8";  
 
-	$db_usernameMySQL = "ETU_MYSQL";
-	$db_passwordMySQL = "ETU_MYSQL"; //
-	$dbMySQL = "mysql:host=localhost;dbname=TP3_PHP;charset=UTF8";
+	$db_usernameMySQL = "vikingtransport";
+	$db_passwordMySQL = "vikingtransport"; 
+	$dbMySQL = "mysql:host=db;dbname=vikingtransport;charset=UTF8";
 
  ?>
