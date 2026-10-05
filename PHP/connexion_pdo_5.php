@@ -8,7 +8,7 @@
 	echo '<meta charset="utf-8"> ';
 	// décommenter en fonction du serveur de BDD utilisé
 	//define ("MOD_BDD","MYSQL");
-	define ("MOD_BDD","ORACLE");
+	define ("MOD_BDD","MYSQL");
 
 	if (MOD_BDD == "MYSQL")
 	{
