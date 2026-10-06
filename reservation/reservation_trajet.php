@@ -1,14 +1,7 @@
 <?php
 session_start();
 
-$host = "harpagon.unicaen.fr";
-$port = "1521";
-$sid = "info";
-$user = "agile_5";
-$password = "lemeilleurgroupe";
-
-$dsn = "oci:dbname=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=$host)(PORT=$port))(CONNECT_DATA=(SID=$sid)))";
-
+require $_SERVER['DOCUMENT_ROOT'] . '/PHP/db_config.php';
 try {
     $conn = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 

@@ -3,10 +3,7 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-$db_username = "agile_5";
-$db_password = "lemeilleurgroupe";
-$db = "oci:dbname=harpagon.unicaen.fr:1521/info.harpagon.unicaen.fr;charset=AL32UTF8";
-
+require $_SERVER['DOCUMENT_ROOT'] . '/PHP/db_config.php';
 try {
     $conn = new PDO($db, $db_username, $db_password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

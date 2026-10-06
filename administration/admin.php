@@ -6,13 +6,7 @@ if (!isset($_SESSION['id']) || ($_SESSION['id'] != 200 && $_SESSION['type'] != 2
     exit;
 }
 
-$host     = "harpagon.unicaen.fr";
-$port     = "1521";
-$sid      = "info";
-$user     = "agile_5";
-$password = "lemeilleurgroupe";
-$dsn      = "oci:dbname=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=$host)(PORT=$port))(CONNECT_DATA=(SID=$sid)))";
-
+require $_SERVER['DOCUMENT_ROOT'] . '/PHP/db_config.php';
 // Suppression au clic
 $supprimes = [];
 if (isset($_POST['supprimer_inactifs'])) {

@@ -12,13 +12,7 @@ if (!isset($_GET['id']) || empty(trim($_GET['id']))) {
 }
 
 $lig_id   = trim($_GET['id']);
-$host     = "harpagon.unicaen.fr";
-$port     = "1521";
-$sid      = "info";
-$user     = "agile_5";
-$password = "lemeilleurgroupe";
-$dsn      = "oci:dbname=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=$host)(PORT=$port))(CONNECT_DATA=(SID=$sid)))";
-
+require $_SERVER['DOCUMENT_ROOT'] . '/PHP/db_config.php';
 $message = '';
 $message_type = 'success';
 
