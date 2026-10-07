@@ -47,7 +47,14 @@ Le projet combine trois compétences :
 - Réaliser des campagnes de promotion
 - Modifier lignes et horaires
 
-👉 Les fonctionnalités sont **priorisées** (backlog fourni), il faut les développer dans l'ordre de priorité, pas forcément dans l'ordre "logique".
+## 🚀 Déploiement
+
+Le projet a été conçu pour une base de données **Oracle** (serveur de l'IUT), non accessible en dehors du réseau universitaire. Pour le rendre consultable en ligne, il a été auto-hébergé sur un mini-serveur personnel, avec les adaptations suivantes :
+
+- **Base de données** : migration du schéma et des données d'Oracle vers **MariaDB** (conversion des types, des dates, et des fonctions spécifiques Oracle — `SYSDATE`, `TO_DATE`, `TO_CHAR`, `ROWNUM`, etc. — vers leurs équivalents MySQL)
+- **Conteneurisation** : application déployée via **Docker**
+- **Sécurité** : les identifiants de connexion à la base ont été sortis du code source et externalisés dans des variables d'environnement (fichier `.env`, non versionné)
+- **Accès en ligne** : exposition sécurisée via **Tailscale Funnel** (tunnel HTTPS), sans ouverture de port sur la box internet
 
 ## 🛠️ Langages et technologies utilisés
 
